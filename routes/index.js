@@ -56,7 +56,7 @@ module.exports = function(app,passport){
 	    		    
 	    		    //return a bad request response if coordinates are not found
 	    		    if(!coords[0] || !coords[1]){
-	    		    	res.json(400,{'message' : 'coordinates not passed'});
+	    		    	res.json(400,{'message' : 'coordinates not passed re'});
 	    		    }
 	    		    // fetch parking areas near coordinates and respond as json 
 	    		    Area.find({
