@@ -82,6 +82,7 @@ module.exports = function(app,passport){
 	    		case Session.areasel :
 	    			var area = req.query.area;
 					//find the parking spots in the area by consulting the database of the spots
+				res.json(400,{'message' : 'works'});
 					break;	
 //		    		
 //	
