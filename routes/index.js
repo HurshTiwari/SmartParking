@@ -47,11 +47,11 @@ module.exports = function(app,passport){
 	    		    // get coordinates [ <longitude> , <latitude> ]
 	    		    var coords = [];
 	    		    if(req.query.longitude){
-	    		    	coords[1] = parseFloat(req.query.longitude);	
+	    		    	coords[0] = parseFloat(req.query.longitude);	
 	    		    }
 	    		    
 	    		    if(req.query.latitude){
-	    		    	coords[0] = parseFloat(req.query.latitude);	
+	    		    	coords[1] = parseFloat(req.query.latitude);	
 	    		    }
 	    		    
 	    		    //return a bad request response if coordinates are not found
