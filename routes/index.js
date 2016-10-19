@@ -16,10 +16,10 @@ module.exports = function(app,passport){
 	/* GET login page. */
 	app.get('/', function(req, res) {
     	// Display the Login page with any flash message, if any
-		//res.render('index', { message: req.flash('message') });
-		res.json('response message',{
+		res.render('index', { message: req.flash('welcome!') });
+		/*res.json('response message',{
 			message : 'Welcome api located at /api'
-		});
+		});*/
 	});
 	
 	
