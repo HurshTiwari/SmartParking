@@ -130,7 +130,12 @@ module.exports = function(app,passport){
 						});
 	    	}
     });
-
+var bodyParser = require("body-parser");
+///////req.body is undefined here
+//extended: false means you are parsing strings only (not parsing images/videos..etc)
+app.use(bodyParser.urlencoded({extended: false});
+///////you req.body is working here (module below is using req.body)
+app.use("/", module);
     // =====================================
     // GOOGLE ROUTES =======================
     // =====================================
@@ -140,7 +145,7 @@ module.exports = function(app,passport){
     app.post('/auth/google',function(req,res,next){
     	//console.log(req.query);
     	//console.log(req);
-	console.dir(req.body);
+	console.log(req.body);
     	console.log("before");
     	next();
     }//,passport.authenticate('google-id-token')
