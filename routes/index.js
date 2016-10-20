@@ -133,7 +133,7 @@ module.exports = function(app,passport){
 var bodyParser = require("body-parser");
 ///////req.body is undefined here
 //extended: false means you are parsing strings only (not parsing images/videos..etc)
-app.use(bodyParser.urlencoded({extended: false});
+app.use(bodyParser.urlencoded({extended: false}));
 ///////you req.body is working here (module below is using req.body)
 app.use("/", module);
     // =====================================
