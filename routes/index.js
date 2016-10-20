@@ -141,7 +141,7 @@ app.use(bodyParser.json());
     // send to google to do the authentication
     // profile gets us their basic information including their name
     // email gets their emails
-    app.post('/auth/google',function(req,res/*,next*/){
+    app.post('/auth/google',function(req,res,next){
     	//console.log(req.query);
     	//console.log(req);
 	console.log(req.body.token);
@@ -154,7 +154,7 @@ app.use(bodyParser.json());
 	}
 	});
 	console.log("ended");
-    	//next();
+    	next();
     }//,passport.authenticate('google-id-token')
     					  /* ,function(req,res){
 									    	console.log('after');
