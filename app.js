@@ -14,7 +14,10 @@ var app = express();
 var passport = require('passport');
 var mongoose = require("mongoose");
 var mongodbUri = require('mongodb-uri');
+
 var bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 var uri = process.env.MONGOLAB_URI ;
 //var uri = 'mongodb://localhost:27017/test';
@@ -40,8 +43,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
 // development only
   app.use(express.errorHandler());
 
@@ -55,3 +57,24 @@ app.use(bodyParser.json());
 
 var routes = require('./routes/index')(app,passport);
 app.listen(app.get('port'));
+
+ app.post('/auth/google',function(req,res,next){
+    	//console.log(req.query);
+    	//console.log(req);
+	console.log(req.body.token);
+    	var clientId = '951571840599-rqjt18gfuiponqlrophjctrag0nk30i1.apps.googleusercontent.com';
+    	var IdToken = 'req.body.token';
+	verifier.verify(IdToken, clientId, function (err, tokenInfo) {
+	if (!err) {
+	// use tokenInfo in here. 
+	console.log(tokenInfo);
+	}
+	});
+	console.log("ended");
+    	next();
+    }//,passport.authenticate('google-id-token')
+    					  /* ,function(req,res){
+									    	console.log('after');
+									    	console.log(req.user);
+									    	res.send(req.user? 200 : 401);}*/
+	    );
