@@ -159,8 +159,8 @@ app.use(bodyParser.json());
     					  /* ,function(req,res){
 									    	console.log('after');
 									    	console.log(req.user);
-									    	res.send(req.user? 200 : 401);*/
-    });
+									    	res.send(req.user? 200 : 401);}*/
+	    );
 
 	// the callback after google has authenticated the user used for server side authentication not needed right now
 	//    app.get('/auth/google/callback',
