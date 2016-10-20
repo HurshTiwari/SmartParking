@@ -10,6 +10,8 @@ var User = require('../models/user');
 var Area = require('../models/area');
 var bodyParser = require("body-parser");
 var verifier = require('google-id-token-verifier');
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 module.exports = function(app,passport){
 
@@ -133,8 +135,7 @@ module.exports = function(app,passport){
 
 ///////req.body is undefined here
 //extended: false means you are parsing strings only (not parsing images/videos..etc)
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
     // =====================================
     // GOOGLE ROUTES =======================
     // =====================================
