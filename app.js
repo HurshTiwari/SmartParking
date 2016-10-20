@@ -15,6 +15,7 @@ var passport = require('passport');
 var mongoose = require("mongoose");
 var mongodbUri = require('mongodb-uri');
 var bodyParser = require('body-parser');
+
 var uri = process.env.MONGOLAB_URI ;
 //var uri = 'mongodb://localhost:27017/test';
 var mongooseConnectString = mongodbUri.formatMongoose(uri);
@@ -40,7 +41,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 // development only
   app.use(express.errorHandler());
 
