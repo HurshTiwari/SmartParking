@@ -8,8 +8,8 @@ var router = express.Router();
 var Session = require('../config/session');
 var User = require('../models/user');
 var Area = require('../models/area');
-
-
+var bodyParser = require("body-parser");
+var verifier = require('google-id-token-verifier');
 
 module.exports = function(app,passport){
 
@@ -130,29 +130,36 @@ module.exports = function(app,passport){
 						});
 	    	}
     });
-var bodyParser = require("body-parser");
+
 ///////req.body is undefined here
 //extended: false means you are parsing strings only (not parsing images/videos..etc)
-app.use(bodyParser.urlencoded({extended: false}));
-///////you req.body is working here (module below is using req.body)
-app.use("/", module);
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
     // =====================================
     // GOOGLE ROUTES =======================
     // =====================================
     // send to google to do the authentication
     // profile gets us their basic information including their name
     // email gets their emails
-    app.post('/auth/google',function(req,res,next){
+    app.post('/auth/google',function(req,res/*,next*/){
     	//console.log(req.query);
     	//console.log(req);
-	console.log(req.body);
-    	console.log("before");
-    	next();
+	console.log(req.body.token);
+    	var clientId = '951571840599-rqjt18gfuiponqlrophjctrag0nk30i1.apps.googleusercontent.com';
+    	var IdToken = 'req.body.token';
+	verifier.verify(IdToken, clientId, function (err, tokenInfo) {
+	if (!err) {
+	// use tokenInfo in here. 
+	console.log(tokenInfo);
+	}
+	});
+	console.log("ended");
+    	//next();
     }//,passport.authenticate('google-id-token')
-    					   ,function(req,res){
+    					  /* ,function(req,res){
 									    	console.log('after');
 									    	console.log(req.user);
-									    	res.send(req.user? 200 : 401);
+									    	res.send(req.user? 200 : 401);*/
     });
 
 	// the callback after google has authenticated the user used for server side authentication not needed right now
