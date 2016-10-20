@@ -8,10 +8,7 @@ var router = express.Router();
 var Session = require('../config/session');
 var User = require('../models/user');
 var Area = require('../models/area');
-var bodyParser = require("body-parser");
 var verifier = require('google-id-token-verifier');
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 
 module.exports = function(app,passport){
 
