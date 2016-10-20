@@ -8,7 +8,7 @@ var router = express.Router();
 var Session = require('../config/session');
 var User = require('../models/user');
 var Area = require('../models/area');
-var verifier = require('google-id-token-verifier');
+
 
 module.exports = function(app,passport){
 
@@ -139,7 +139,10 @@ module.exports = function(app,passport){
     // send to google to do the authentication
     // profile gets us their basic information including their name
     // email gets their emails
-    app.post('/auth/google',function(req,res,next){
+   
+	/*
+	
+	app.post('/auth/google',function(req,res,next){
     	//console.log(req.query);
     	//console.log(req);
 	console.log(req.body.token);
@@ -158,7 +161,7 @@ module.exports = function(app,passport){
 									    	console.log('after');
 									    	console.log(req.user);
 									    	res.send(req.user? 200 : 401);}*/
-	    );
+//	    );
 
 	// the callback after google has authenticated the user used for server side authentication not needed right now
 	//    app.get('/auth/google/callback',
