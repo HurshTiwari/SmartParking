@@ -140,6 +140,7 @@ module.exports = function(app,passport){
     app.post('/auth/google',function(req,res,next){
     	//console.log(req.query);
     	//console.log(req);
+	console.dir(req.body);
     	console.log("before");
     	next();
     }//,passport.authenticate('google-id-token')
