@@ -18,6 +18,7 @@ var mongodbUri = require('mongodb-uri');
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+var verifier = require('google-id-token-verifier');
 
 var uri = process.env.MONGOLAB_URI ;
 //var uri = 'mongodb://localhost:27017/test';
