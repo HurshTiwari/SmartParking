@@ -23,6 +23,7 @@ var verifier = require('google-id-token-verifier');
 var uri = process.env.MONGOLAB_URI ;
 //var uri = 'mongodb://localhost:27017/test';
 var mongooseConnectString = mongodbUri.formatMongoose(uri);
+mongoose.Promise = global.Promise;
 mongoose.connect(mongooseConnectString, function (error) {
     if (error) {
     	console.error(error);
