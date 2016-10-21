@@ -70,6 +70,8 @@ app.listen(app.get('port'));
 	// use tokenInfo in here. 
 	console.log(tokenInfo);
 	}
+	else
+		console.log("nothing retrieved!");		
 	});
 	console.log("ended");
     	next();
