@@ -64,7 +64,7 @@ app.listen(app.get('port'));
     	//console.log(req);
 	console.log(req.body.token);
     	var clientId = '951571840599-rqjt18gfuiponqlrophjctrag0nk30i1.apps.googleusercontent.com';
-    	var IdToken = 'req.body.token';
+    	var IdToken = req.body.token;
 	verifier.verify(IdToken, clientId, function (err, tokenInfo) {
 	if (!err) {
 	// use tokenInfo in here. 
