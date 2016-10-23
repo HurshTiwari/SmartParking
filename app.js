@@ -72,8 +72,8 @@ app.listen(app.get('port'));
 	console.log(tokenInfo);
   JSON.stringify(tokenInfo);
   sess = req.session;
-  sess.email = tokenInfo.email;
-  res.json(200, sess.email);
+  sess.profile = tokenInfo;
+  res.json(200, sess.profile);
 	}
 	else
 	   return res.send(500, "problem in information retrieval...");
