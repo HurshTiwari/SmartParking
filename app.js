@@ -40,7 +40,7 @@ app.set('trust proxy', true);
 app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.cookieParser());
-app.use(express.session({secret : 'suckMyDick'}));
+app.use(express.session({secret : 'doomsday'}));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(app.router);
@@ -56,11 +56,11 @@ app.use(express.static(path.join(__dirname, 'public')));
   app.use(flash());
   app.use(express.methodOverride());
 
-
+var sess;
 var routes = require('./routes/index')(app,passport);
 app.listen(app.get('port'));
 
- app.post('/auth/google',function(req,res,next){
+ app.post('/auth/google',function(req,res){
     	//console.log(req.query);
     	//console.log(req);
 	console.log(req.body.token);
@@ -70,15 +70,14 @@ app.listen(app.get('port'));
 	if (!err) {
 	// use tokenInfo in here. 
 	console.log(tokenInfo);
+  JSON.stringify(tokenInfo);
+  sess = req.session;
+  sess.email = tokenInfo.email;
+  res.json(200, sess.email);
 	}
 	else
-		console.log("nothing retrieved!");		
+	   return res.send(500, "problem in information retrieval...");
 	});
 	console.log("ended");
-    	next();
-    }//,passport.authenticate('google-id-token')
-    					  /* ,function(req,res){
-									    	console.log('after');
-									    	console.log(req.user);
-									    	res.send(req.user? 200 : 401);}*/
+    }
 	    );
