@@ -79,5 +79,4 @@ app.listen(app.get('port'));
 	   return res.send(500, "problem in information retrieval...");
 	});
 	console.log("ended");
-    }
-	    );
+  });

@@ -16,17 +16,27 @@ module.exports = function(app,passport){
 	app.get('/', function(req, res) {
     	// Display the Login page with any flash message, if any
 		//res.render('index', { message: req.flash('message') });
-		res.send(200).json({
+		res.json(200,{
 			message : 'Welcome api located at /api'
 		});
 	});
 	
-	
+	app.get('/logout',function(req, res) {
+    		if(req.session.email){
+    			req.session.destroy();
+    			res.redirect(200,'/');
+    		}
+    		else{
+			res.json(401,'Not Authorized');    			
+    		}
+    		});
 	// route for showing the profile page
     app.get('/api'
     		//, isLoggedIn
     		
     		,function(req, res) {
+
+    		if(req.session.email){
 	        
 	    	var status = req.query.status;
 	
@@ -75,6 +85,7 @@ module.exports = function(app,passport){
 									    		        return res.json(500, err);
 							    		      			}
 									    		      res.json(200, locations);
+	    		      	
 	    		      		});
     		    	break;
     		    	
@@ -128,6 +139,10 @@ module.exports = function(app,passport){
 							message: "Bad Query"
 						});
 	    	}
+	    }
+	    		else
+	    			res.json(401,'Not Authorized');
+
     });
 
 ///////req.body is undefined here
