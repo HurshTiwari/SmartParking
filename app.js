@@ -56,7 +56,6 @@ app.use(express.static(path.join(__dirname, 'public')));
   app.use(flash());
   app.use(express.methodOverride());
 
-var sess;
 var routes = require('./routes/index')(app,passport);
 app.listen(app.get('port'));
 
@@ -68,12 +67,11 @@ app.listen(app.get('port'));
     	var IdToken = req.body.token;
 	verifier.verify(IdToken, clientId, function (err, tokenInfo) {
 	if (!err) {
-	// use tokenInfo in here. 
 	console.log(tokenInfo);
   JSON.stringify(tokenInfo);
-  sess = req.session;
-  sess.profile = tokenInfo;
-  res.json(200, sess.profile);
+  req.session.profile = tokenInfo;
+  console.log(req.session);
+  res.json(200, tokenInfo);
 	}
 	else
 	   return res.send(500, "problem in information retrieval...");
