@@ -22,7 +22,7 @@ module.exports = function(app,passport){
 	});
 	
 	app.get('/logout',function(req, res) {
-    		if(req.session){
+    		if(req.session.profile){
     			req.session.destroy();
     			res.redirect(200,'/');
     		}
@@ -36,7 +36,7 @@ module.exports = function(app,passport){
     		
     		,function(req, res) {
 
-    		if(req.session){
+    		if(req.session.profile){
 	        
 	    	var status = req.query.status;
 	
