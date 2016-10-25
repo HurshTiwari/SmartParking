@@ -140,9 +140,10 @@ module.exports = function(app,passport){
 						});
 	    	}
 	    }
-	    		else
+	    		else{
+				console.log("Unauthorized request");
 	    			res.json(401,'Not Authorized');
-
+			}
     });
 
 ///////req.body is undefined here
