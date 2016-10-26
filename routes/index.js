@@ -36,8 +36,9 @@ module.exports = function(app,passport){
     		
     		,function(req, res) {
 
-    		if(req.session.profile){
-	        
+    		//sessions work in case of browser but not in apps	
+    		//if(req.session.profile){
+	        if(parseInt(req.query.authenticated) == 1){
 	    	var status = req.query.status;
 	
 	    	switch(status){
