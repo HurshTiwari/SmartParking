@@ -3,9 +3,9 @@
  */
 module.exports = {
 		start : "START",
-		areasel : "AREA SELECTED",
-		sbook : "SPOT BOOKED",
-		pbill : "PARKED AND BILLING",
-		bwpay : "BILLED AND WAITING PAYMENT",
-		psucc : "PAYMENT SUCCEEDED",
+		areasel : "AREASELECTED",
+		sbook : "SPOTBOOKED",
+		pbill : "PARKEDANDBILLING",
+		bwpay : "BILLEDANDWAITINGPAYMENT",
+		psucc : "PAYMENTSUCCEEDED",
 };

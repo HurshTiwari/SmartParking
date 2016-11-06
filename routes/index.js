@@ -3,11 +3,48 @@
  * GET home page.
  */
 var express = require('express');
+var https = require('https');
 var router = express.Router();
 //var helper = require('./helper');
 var Session = require('../config/session');
 var User = require('../models/user');
 var Area = require('../models/area');
+var Spot = require('../models/spot');
+function getStatus(spot,length,cb){
+	//console.log('hi dickhead');
+	var id = spot.thngId;
+	var auth = spot.thngKey;
+	//console.log(id+' ' +auth);
+	var options = {
+			  host: 'api.evrythng.com',
+			  path: '/thngs/'+id+'/properties',
+			  headers: {"Authorization" : auth}
+			};
+	var callback = function(response) {
+		
+	  var str = '';
+	  //another chunk of data has been recieved, so append it to `str`
+	  response.on('data', function (chunk) {
+	    str += chunk;
+	  });
+	  //the whole response has been recieved, so we just print it out here
+	  response.on('end', function () {
+	    //console.log(str);
+		  var data = JSON.parse(str);
+		  var resp = data.filter(function(o){
+			  return o.key==="status";
+		  });
+	    cb(null,spot,length,resp[0]);
+	  });
+	};
+	try{
+	https.request(options, callback).end();
+	}
+	catch(err){
+		cb(new Error(err));
+	}
+	
+} 
 
 
 module.exports = function(app,passport){
@@ -38,11 +75,11 @@ module.exports = function(app,passport){
 
     		//sessions work in case of browser but not in apps	
     		//if(req.session.profile){
-	        if(parseInt(req.query.authenticated) == 1){
+	        //if(parseInt(req.query.authenticated) == 1){
 	    	var status = req.query.status;
 	
 	    	switch(status){
-	    	
+//---------------------------case 1 : Start --------------------------//	    	
 	    		case Session.start :
 	    			// query limit default set to 5
 	    	    	var limit = parseInt(req.query.limit) || 10;	
@@ -68,7 +105,11 @@ module.exports = function(app,passport){
 	    		    if(!coords[0] || !coords[1]){
 	    		    	res.json(400,{'message' : 'coordinates not passed re'});
 	    		    }
-	    		    // fetch parking areas near coordinates and respond as json 
+	    		    // fetch parking areas near coordinates and respond as json
+	    		    
+	    		    //TODO: Ask aditya if we need all the data to be sent as response if not we can trim the data to just area ids 
+	    		    //and names since sending area locations is pretty pointless anyways because the client doesnot need it at all
+
 	    		    Area.find({
 			    		      loc: {
 			    		        $near: {
@@ -89,14 +130,46 @@ module.exports = function(app,passport){
 	    		      	
 	    		      		});
     		    	break;
-    		    	
+//---------------------------case 2 : Area Selected--------------------------//    		    	
 	    		case Session.areasel :
-	    			var area = req.query.area;
-					//find the parking spots in the area by consulting the database of the spots
-				res.json(400,{'message' : 'works'});
+	    			var result = [];
+	    			var counter =0;
+	    			var addSpotToResponse = function(err,spot,length,data){
+	    			  if(err){
+	    				  return res.json(500,err);
+	    			  }
+	    			  counter++;
+  		    		  if(data.value===false){
+  		    			 // console.log('Added spot : '+spot.id);
+  		    			  result.push({'spotId': spot.id,'id':spot._id});
+  		    		  }
+  		    		  if(counter===length){
+  		    			  res.json(200,result);
+  		    		  }
+  		    	  	};
+  		    	  	var area = req.query.area;
+	    			//console.log(area);
+	    			Area.findOne({'_id':area},{'_id' : 0})
+  		      		.select('spots')
+  		      		.populate('spots')
+  		      		.exec(function(err, data){
+  		      								 var spots = JSON.parse(JSON.stringify(data));
+							    		     if (err) {
+							    		    	console.log('Database error :'+	err);
+							    		        return res.json(500, err);
+					    		      		 }
+							    		      //Array of spots in the spots var
+							    		      //for each spot in spots call its evrythng rest api
+							    		      var length = spots.spots.length;
+							    		      for(var i=0;i<length;i++){
+							    		    	  var spot = spots.spots[i];
+							    		    	  getStatus(spot,length,addSpotToResponse);
+							    		      }
+  		      		});	
 					break;	
 //		    		
 //	
+//---------------------------case 3 : Spot Booked --------------------------//
 //	    		case Session.sbook : 
 //					helper.getParkAreas(req.lat,req.long,function(err,data){
 //		    			if(err){
@@ -106,7 +179,7 @@ module.exports = function(app,passport){
 //		    		});
 //					break;
 //				
-//	
+//	//---------------------------case 4 : Parked and Billing --------------------------//
 //	    		case Session.pbill : 
 //					helper.getParkAreas(req.lat,req.long,function(err,data){
 //		    			if(err){
@@ -116,7 +189,7 @@ module.exports = function(app,passport){
 //		    		});
 //					break;
 //				
-//	
+//	//----------------------------case 5 : Waiting Payment ----------------------------------//
 //	    		case Session.bwpay : 
 //					helper.getParkAreas(req.lat,req.long,function(err,data){
 //		    			if(err){
@@ -126,7 +199,7 @@ module.exports = function(app,passport){
 //		    		});
 //					break;
 //				
-//	
+//	//---------------------------case 6 : Payment Succeeded --------------------------//
 //	    		case Session.psucc : 
 //					helper.getParkAreas(req.lat,req.long,function(err,data){
 //		    			if(err){
@@ -140,11 +213,11 @@ module.exports = function(app,passport){
 							message: "Bad Query"
 						});
 	    	}
-	    }
-	    		else{
-				console.log("Unauthorized request");
-	    			res.json(401,'Not Authorized');
-			}
+//	    }
+//	    		else{
+//				console.log("Unauthorized request");
+//	    			res.json(401,'Not Authorized');
+//			}
     });
 
 ///////req.body is undefined here
