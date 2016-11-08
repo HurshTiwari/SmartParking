@@ -2,6 +2,8 @@
 /*
  * GET home page.
  */
+ var MongoClient = require('mongodb').MongoClient
+  , format = require('util').format;
 var express = require('express');
 var https = require('https');
 var router = express.Router();
@@ -51,7 +53,7 @@ module.exports = function(app,passport){
 
 	/* GET login page. */
 	app.get('/', function(req, res) {
-    	// Display the Login page with any flash message, if any
+    	//Display the Login page with any flash message, if any
 		//res.render('index', { message: req.flash('message') });
 		res.json(200,{
 			message : 'Welcome api located at /api'
@@ -139,7 +141,7 @@ module.exports = function(app,passport){
 	    				  return res.json(500,err);
 	    			  }
 	    			  counter++;
-  		    		  if(data.value===false){
+  		    		  if(data.value===false && spot.reserved==false){
   		    			 // console.log('Added spot : '+spot.id);
   		    			  result.push({'spotId': spot.id,'id':spot._id});
   		    		  }
@@ -168,8 +170,31 @@ module.exports = function(app,passport){
   		      		});	
 					break;	
 //		    		
-//	
-//---------------------------case 3 : Spot Booked --------------------------//
+//	//---------------------------case 3 : Area Selected--------------------------// 
+
+	    		case Session.sreserve : 
+
+	    			MongoClient.connect('mongodb://adiityank:aditya*1@ds035786.mlab.com:35786/smartpark-testdb', function(err, db) {
+					if(err) throw err;
+
+					db.collection('spots').findAndModify(
+					  {'_id': req.query.spot }, // query
+					  [['_id','asc']],  // sort order
+					  {$set: {'reserved': "1"}}, // replacement, replaces only the field "hi"
+					  {}, // options
+					  function(err, object) {
+					      if (err){
+					          res.json(500, err);  // returns error if no matching object found
+					      }else{
+					          res.json(200,object);
+					      }
+					  });
+					});
+					break;
+				
+
+
+//---------------------------case 4 : Spot Booked --------------------------//
 //	    		case Session.sbook : 
 //					helper.getParkAreas(req.lat,req.long,function(err,data){
 //		    			if(err){
@@ -179,7 +204,7 @@ module.exports = function(app,passport){
 //		    		});
 //					break;
 //				
-//	//---------------------------case 4 : Parked and Billing --------------------------//
+//	//---------------------------case 5 : Parked and Billing --------------------------//
 //	    		case Session.pbill : 
 //					helper.getParkAreas(req.lat,req.long,function(err,data){
 //		    			if(err){
@@ -189,7 +214,7 @@ module.exports = function(app,passport){
 //		    		});
 //					break;
 //				
-//	//----------------------------case 5 : Waiting Payment ----------------------------------//
+//	//----------------------------case 6 : Waiting Payment ----------------------------------//
 //	    		case Session.bwpay : 
 //					helper.getParkAreas(req.lat,req.long,function(err,data){
 //		    			if(err){
@@ -199,7 +224,7 @@ module.exports = function(app,passport){
 //		    		});
 //					break;
 //				
-//	//---------------------------case 6 : Payment Succeeded --------------------------//
+//	//---------------------------case 7 : Payment Succeeded --------------------------//
 //	    		case Session.psucc : 
 //					helper.getParkAreas(req.lat,req.long,function(err,data){
 //		    			if(err){

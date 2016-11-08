@@ -6,6 +6,8 @@ var Schema = mongoose.Schema;
 var spotSchema = new Schema({
     id : String,
     thngId: String,
-    thngKey: String
+    thngKey: String,
+    reserved: String
+
 });	
 module.exports = mongoose.model('Spot',spotSchema);
