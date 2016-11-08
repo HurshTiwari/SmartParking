@@ -4,6 +4,7 @@
  */
  var MongoClient = require('mongodb').MongoClient
   , format = require('util').format;
+ var ObjectId = require('mongodb').ObjectID;
 var express = require('express');
 var https = require('https');
 var router = express.Router();
@@ -176,12 +177,10 @@ module.exports = function(app,passport){
 
 	    			MongoClient.connect('mongodb://adiityank:aditya*1@ds035786.mlab.com:35786/smartpark-testdb', function(err, db) {
 					if(err) throw err;
-
-					db.collection('spots').findAndModify(
-					  {'_id': req.query.spot }, // query
-					  [['_id','asc']],  // sort order
+					console.log(req.query.spot);
+					db.collection('spots').update(
+					  { '_id' : ObjectId(req.query.spot) },  // query
 					  {$set: {'reserved': "1"}}, // replacement, replaces only the field "hi"
-					  {}, // options
 					  function(err, object) {
 					      if (err){
 					          res.json(500, err);  // returns error if no matching object found
