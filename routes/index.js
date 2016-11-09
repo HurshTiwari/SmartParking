@@ -142,7 +142,7 @@ module.exports = function(app,passport){
 	    				  return res.json(500,err);
 	    			  }
 	    			  counter++;
-  		    		  if(data.value===false && spot.reserved==="0"){
+  		    		  if(data.value===false){
   		    			 // console.log('Added spot : '+spot.id);
   		    			  result.push({'spotId': spot.id,'id':spot._id});
   		    		  }
@@ -153,8 +153,9 @@ module.exports = function(app,passport){
   		    	  	var area = req.query.area;
 	    			//console.log(area);
 	    			Area.findOne({'_id':area},{'_id' : 0})
-  		      		.select('spots')
+  		      		.select('spots') 				
   		      		.populate('spots')
+  		      		.where('reserved').equals('0')	
   		      		.exec(function(err, data){
   		      								 var spots = JSON.parse(JSON.stringify(data));
 							    		     if (err) {
@@ -194,17 +195,21 @@ module.exports = function(app,passport){
 
 
 //---------------------------case 4 : Spot Booked --------------------------//
-//	    		case Session.sbook : 
-//					helper.getParkAreas(req.lat,req.long,function(err,data){
-//		    			if(err){
-//		    				res.send(500).send('Server error');
-//		    			}
-//		    			res.json({ areas : data});
-//		    		});
-//					break;
-//				
+	    		case Session.sbook : 
+	    		Spot.findOne({'_id':req.query.spot},{'_id' : 0})
+  		      		.select('thngId thngKey')
+  		      		.exec(function(err, data){
+  		      			if (err) {
+			    		    	console.log('Database error :'+	err);
+			    		        return res.json(500, err);
+	    		      		 }
+	    		      	var spot = JSON.parse(JSON.stringify(data));
+	    		      	console.log(spot.thngId +' '+ spot.thngKey);
+  		      		})
+				break;
+			
 //	//---------------------------case 5 : Parked and Billing --------------------------//
-//	    		case Session.pbill : 
+//	    		case Session.h : 
 //					helper.getParkAreas(req.lat,req.long,function(err,data){
 //		    			if(err){
 //		    				res.send(500).send('Server error');
