@@ -155,7 +155,7 @@ module.exports = function(app,passport){
 	    			Area.findOne({'_id':area},{'_id' : 0})
   		      		.select('spots') 				
   		      		.populate('spots')
-  		      		.where('reserved').equals('0')	
+  		      		//.where('reserved').equals('0')	
   		      		.exec(function(err, data){
   		      								 var spots = JSON.parse(JSON.stringify(data));
 							    		     if (err) {
