@@ -142,7 +142,7 @@ module.exports = function(app,passport){
 	    				  return res.json(500,err);
 	    			  }
 	    			  counter++;
-  		    		  if(data.value===false){
+  		    		  if(data.value===false && data.reserved==="0"){
   		    			 // console.log('Added spot : '+spot.id);
   		    			  result.push({'spotId': spot.id,'id':spot._id});
   		    		  }
