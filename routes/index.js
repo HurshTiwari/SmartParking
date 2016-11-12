@@ -5,6 +5,8 @@
  var MongoClient = require('mongodb').MongoClient
   , format = require('util').format;
  var ObjectId = require('mongodb').ObjectID;
+ var mongoose = require("mongoose");
+ var WebSocket = require('ws');
 var express = require('express');
 var https = require('https');
 var router = express.Router();
@@ -13,6 +15,109 @@ var Session = require('../config/session');
 var User = require('../models/user');
 var Area = require('../models/area');
 var Spot = require('../models/spot');
+var Booking = require('../models/booking');
+
+
+
+
+var pushNote = function(err,booking,cb){
+		var msg ={'to' : booking.user_id , 'notification' :{}};
+		if(err){
+			msg.notification.body = err;
+			msg.notification.title = 'ERROR';
+		}else{
+			msg.notification.body = 'Spot Reached';
+			msg.notification.title = 'SPOT REACHED';
+		}
+		var options = {
+			  host: 'fcm.googleapis.com',
+			  path: '/fcm/send',
+			  method : 'POST',
+			  headers: {'Authorization' :'key=AAAA3Y4Z_lc:APA91bH4hLomPqK4BhT28n7ZSEEv7igom3bXUqA6u6a3QDy_ted6VFus1PKbraG7wR1SN6LkRHYXvnTy-prWjvm5nl_E6MO2E1MK-QmY5OuxxsMVa8sJSDVC7EUwAjFnPArnUEA6aMTvOjiYYeLvnhM1k2KWnw6Wgw','Content-Type' : 'application/json'}
+			};
+		var callback = function(response) {
+		  var str = '';
+		  //another chunk of data has been recieved, so append it to `str`
+		  response.on('data', function (chunk) {
+		    str += chunk;
+		  });
+		  //the whole response has been recieved, so we just print it out here
+		  response.on('end', function () {
+		    //console.log('DONE :' + str);
+		    cb(null);
+		  });
+		};
+	
+		try{
+		//console.log(msg);
+		var req = https.request(options, callback);
+		req.write(JSON.stringify(msg));
+		req.end();
+		}
+		catch(err){
+			console.log('Error in pushing : ' + err);
+			cb(new Error(err));
+		}	
+};
+
+function startBookingTimePoll(booking,thngId,key,cb){
+	var url = 'wss://ws.evrythng.com:443/thngs/'+thngId+'/properties?access_token='+key;
+  	var socket = new WebSocket(url);
+  	socket.on('message', function (message) {
+  		console.log(message);
+	  	var content = JSON.parse(message);
+	  	//console.log('Property update : ', content[0]);
+	  	if (content[0].key==="status" && content[0].value===true ){
+	  		//once property update occurs 
+	  		//1. update the startTime for booking table for this parking spot
+	  		var date = new Date().getTime();
+	  		var bookingId = booking._id;
+	  		var booktime = new mongoose.Types.ObjectId(bookingId).getTimestamp();
+	  		var diff = date - booktime;
+	  		var pushNoteCallback  = function(err){
+						if(err){
+							console.log(err);
+							return;
+						}
+						//console.log('Notification Pushed');
+						return;
+					};
+	  		//console.log(date + " - " + booktime.getTime() + " = " + diff);
+	  		if(diff>0 && diff<600000){
+	  			Booking.update({ _id: bookingId },{$set: { 'start_time': date }},function(err,data){
+	  				if(err){
+	  					console.log('Error updating starttime' + err);
+	  					var error = {message : 'Booking Failed.'};
+	  					pushNote(error,booking,pushNoteCallback);
+	  					cb(null);
+	  				}
+	  					//console.log('before pushNote');
+	  					pushNote(null,booking,pushNoteCallback);
+	  					//console.log('after pushNote');
+	  					cb(null);
+	  			});
+	  		}
+	  		else{
+	  			var err = {message : 'Booking TimeOut.'};
+	  			pushNote(err,booking,pushNoteCallback);
+	  			Booking.findOneAndRemove({_id:bookingId},function(err,data){
+	  				if(err){
+	  					console.log('Error deleting booking' + err);
+	  					cb(null);
+	  				}
+	  				console.log('Deleted booking ' + data);
+	  				cb(null);
+	  			});
+	  		}
+	  		
+	  	}
+  	});
+  	socket.on('error',function(error){
+  		console.log('Error while connecting to web socket : ' + error);
+  		cb(error);
+  	});	
+}
+
 function getStatus(spot,length,cb){
 	//console.log('hi dickhead');
 	var id = spot.thngId;
@@ -177,10 +282,12 @@ module.exports = function(app,passport){
 	    		case Session.sreserve : 
 
 	    			MongoClient.connect('mongodb://adiityank:aditya*1@ds035786.mlab.com:35786/smartpark-testdb', function(err, db) {
-					if(err) throw err;
+					if(err){
+						throw err;
+					}
 					console.log(req.query.spot);
 					db.collection('spots').update(
-					  { '_id' : ObjectId(req.query.spot) },  // query
+					  { '_id' : new ObjectId(req.query.spot) },  // query
 					  {$set: {'reserved': "1"}}, // replacement, replaces only the field "hi"
 					  function(err, object) {
 					      if (err){
@@ -195,8 +302,11 @@ module.exports = function(app,passport){
 
 
 //---------------------------case 4 : Spot Booked --------------------------//
-	    		case Session.sbook : 
-	    		Spot.findOne({'_id':req.query.spot},{'_id' : 0})
+	    		case Session.sbook :
+	    			var s =req.query.spot;
+	    			var clientKey = req.query.key;
+	    			//console.log(s + " " + clientKey);
+	    			Spot.findOne({"_id":s})
   		      		.select('thngId thngKey')
   		      		.exec(function(err, data){
   		      			if (err) {
@@ -204,8 +314,36 @@ module.exports = function(app,passport){
 			    		        return res.json(500, err);
 	    		      		 }
 	    		      	var spot = JSON.parse(JSON.stringify(data));
-	    		      	console.log(spot.thngId +' '+ spot.thngKey);
-  		      		})
+	    		      //	console.log(spot.thngId +' '+ spot.thngKey);
+	    		      	var thngId = spot.thngId;
+	    		      	var key = spot.thngKey;
+	    		      	var booking = new Booking({ 
+	    		      		user_id : clientKey,
+	    		      	    spot_id: spot._id
+	    		      	});
+	    		      	
+	    		      	
+	    		      	booking.save(function(err,booking){
+	    		      		if(err){
+	    		      			console.log(err);	
+	    		      			res.json(500,err);
+	    		      		}
+	    		      		console.log('Booking Made : '+ booking._id);
+	    		      		var startBookingTimePollCallback = function(err){
+	    		      			if(err){
+	    		      				setTimeout(function(){
+	    		      					startBookingTimePoll(booking,thngId,key,startBookingTimePollCallback);
+	    		      				},60000);
+	    		      				return;
+	    		      			}
+	    		      			console.log('timePoll done');
+	    		      			return;
+	    		      		};
+	    		      		startBookingTimePoll(booking,thngId,key,startBookingTimePollCallback);
+	    		      	});
+	    		      	res.json(201,{'time':600});
+	    		      	
+  		      		});
 				break;
 			
 //	//---------------------------case 5 : Parked and Billing --------------------------//

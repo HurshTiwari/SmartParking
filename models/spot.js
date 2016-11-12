@@ -7,7 +7,7 @@ var spotSchema = new Schema({
     id : String,
     thngId: String,
     thngKey: String,
-    reserved: String
-
+    reserved: String,
+    pin : String
 });	
 module.exports = mongoose.model('Spot',spotSchema);

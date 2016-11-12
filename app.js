@@ -57,7 +57,9 @@ app.use(express.static(path.join(__dirname, 'public')));
   app.use(express.methodOverride());
 
 var routes = require('./routes/index')(app,passport);
-app.listen(app.get('port'));
+app.listen(app.get('port'),function(){
+	console.log('running');
+});
 
  app.post('/auth/google',function(req,res){
     	//console.log(req.query);
