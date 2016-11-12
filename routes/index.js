@@ -247,7 +247,7 @@ module.exports = function(app,passport){
 	    				  return res.json(500,err);
 	    			  }
 	    			  counter++;
-  		    		  if(data.value===false){
+  		    		  if(data.value===false && data.reserved==="0"){
   		    			 // console.log('Added spot : '+spot.id);
   		    			  result.push({'spotId': spot.id,'id':spot._id});
   		    		  }
@@ -260,7 +260,7 @@ module.exports = function(app,passport){
 	    			Area.findOne({'_id':area},{'_id' : 0})
   		      		.select('spots') 				
   		      		.populate('spots')
-  		      		.where('reserved').equals('0')	
+  		      		//.where('reserved').equals("0")	
   		      		.exec(function(err, data){
   		      								 var spots = JSON.parse(JSON.stringify(data));
 							    		     if (err) {
@@ -277,7 +277,7 @@ module.exports = function(app,passport){
   		      		});	
 					break;	
 //		    		
-//	//---------------------------case 3 : Area Selected--------------------------// 
+//	//---------------------------case 3 : spot reserved--------------------------// 
 
 	    		case Session.sreserve : 
 
