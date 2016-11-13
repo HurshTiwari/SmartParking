@@ -82,7 +82,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 				cb(null);
 			});
 			
-	},400000);
+	},9000); //for testing it is set to 9 seconds. change later.
   	socket.on('message', function (message) {
   		console.log(message);
 	  	var content = JSON.parse(message);
