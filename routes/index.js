@@ -270,6 +270,9 @@ module.exports = function(app,passport){
 							    		      //Array of spots in the spots var
 							    		      //for each spot in spots call its evrythng rest api
 							    		      var length = spots.spots.length;
+											if(length===0){
+											  res.json(200,result);
+										  }
 							    		      for(var i=0;i<length;i++){
 							    		    	  var spot = spots.spots[i];
 							    		    	  getStatus(spot,length,addSpotToResponse);
