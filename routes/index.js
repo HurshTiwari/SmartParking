@@ -19,11 +19,11 @@ var Booking = require('../models/booking');
 var pushNote = function(err,booking,cb){
 		var msg ={'to' : booking.user_id , 'notification' :{}};
 		if(err){
-			msg.notification.body = err;
-			msg.notification.title = 'ERROR';
+			msg.notification.body = err + " Book again!";
+			msg.notification.title = 'Booking failed';
 		}else{
-			msg.notification.body = 'Spot Reached';
-			msg.notification.title = 'SPOT REACHED';
+			msg.notification.body = 'Parking time starts now.';
+			msg.notification.title = 'Spot Reached';
 		}
 		var options = {
 			  host: 'fcm.googleapis.com',
@@ -71,7 +71,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	var booktime = new mongoose.Types.ObjectId(bookingId).getTimestamp();
 	var bookingTimeout = setTimeout(function(){
 			socket.close(1000);
-			var error = {message : 'Booking Timeout. Sorry please back your car and leave the spot.'};
+			var error ='Booking Timeout.';
 			pushNote(error,booking,pushNoteCallback);
 			Booking.findOneAndRemove({_id:bookingId},function(err,data){
 				if(err){
@@ -97,7 +97,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  			Booking.update({ _id: bookingId },{$set: { 'start_time': date }},function(err,data){
 	  				if(err){
 	  					console.log('Error updating starttime' + err);
-	  					var error = {message : 'Booking Failed.'};
+	  					var error = 'Booking Failed.';
 	  					pushNote(error,booking,pushNoteCallback);
 	  					cb(null);
 	  				}
