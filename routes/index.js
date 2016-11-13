@@ -16,10 +16,6 @@ var User = require('../models/user');
 var Area = require('../models/area');
 var Spot = require('../models/spot');
 var Booking = require('../models/booking');
-
-
-
-
 var pushNote = function(err,booking,cb){
 		var msg ={'to' : booking.user_id , 'notification' :{}};
 		if(err){
@@ -63,6 +59,30 @@ var pushNote = function(err,booking,cb){
 function startBookingTimePoll(booking,thngId,key,cb){
 	var url = 'wss://ws.evrythng.com:443/thngs/'+thngId+'/properties?access_token='+key;
   	var socket = new WebSocket(url);
+  	var pushNoteCallback  = function(err){
+		if(err){
+			console.log(err);
+			return;
+		}
+		console.log('Notification Pushed');
+		return;
+	};
+  	var bookingId = booking._id;
+	var booktime = new mongoose.Types.ObjectId(bookingId).getTimestamp();
+	var bookingTimeout = setTimeout(function(){
+			socket.close(1000);
+			var error = {message : 'Booking Timeout. Sorry please back your car and leave the spot.'};
+			pushNote(error,booking,pushNoteCallback);
+			Booking.findOneAndRemove({_id:bookingId},function(err,data){
+				if(err){
+					console.log('Error deleting booking' + err);
+					cb(null);
+				}
+				console.log('Deleted booking ' + data._id + '\nMessage : ' + error.message);
+				cb(null);
+			});
+			
+	},400000);
   	socket.on('message', function (message) {
   		console.log(message);
 	  	var content = JSON.parse(message);
@@ -71,17 +91,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  		//once property update occurs 
 	  		//1. update the startTime for booking table for this parking spot
 	  		var date = new Date().getTime();
-	  		var bookingId = booking._id;
-	  		var booktime = new mongoose.Types.ObjectId(bookingId).getTimestamp();
 	  		var diff = date - booktime;
-	  		var pushNoteCallback  = function(err){
-						if(err){
-							console.log(err);
-							return;
-						}
-						//console.log('Notification Pushed');
-						return;
-					};
 	  		//console.log(date + " - " + booktime.getTime() + " = " + diff);
 	  		if(diff>0 && diff<600000){
 	  			Booking.update({ _id: bookingId },{$set: { 'start_time': date }},function(err,data){
@@ -94,22 +104,10 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  					//console.log('before pushNote');
 	  					pushNote(null,booking,pushNoteCallback);
 	  					//console.log('after pushNote');
+	  					clearTimeout(bookingTimeout);
 	  					cb(null);
 	  			});
 	  		}
-	  		else{
-	  			var err = {message : 'Booking TimeOut.'};
-	  			pushNote(err,booking,pushNoteCallback);
-	  			Booking.findOneAndRemove({_id:bookingId},function(err,data){
-	  				if(err){
-	  					console.log('Error deleting booking' + err);
-	  					cb(null);
-	  				}
-	  				console.log('Deleted booking ' + data);
-	  				cb(null);
-	  			});
-	  		}
-	  		
 	  	}
   	});
   	socket.on('error',function(error){
@@ -341,7 +339,7 @@ module.exports = function(app,passport){
 	    		      		};
 	    		      		startBookingTimePoll(booking,thngId,key,startBookingTimePollCallback);
 	    		      	});
-	    		      	res.json(201,{'time':600});
+	    		      	res.json(201,{'time':20});
 	    		      	
   		      		});
 				break;
