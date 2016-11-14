@@ -320,7 +320,22 @@ module.exports = function(app,passport){
 
 	    		case Session.sreserve : 
 
-	    			
+	    			MongoClient.connect('mongodb://adiityank:aditya*1@ds035786.mlab.com:35786/smartpark-testdb', function(err, db) {
+					if(err){
+						throw err;
+					}
+					console.log(req.query.spot);
+					db.collection('spots').update(
+					  { '_id' : new ObjectId(req.query.spot) },  // query
+					  {$set: {'reserved': "1"}}, // replacement, replaces only the field "hi"
+					  function(err, object) {
+					      if (err){
+					          res.json(500, err);  // returns error if no matching object found
+					      }else{
+					          res.json(200,object);
+					      }
+					  });
+					});
 					break;
 				
 
@@ -328,31 +343,7 @@ module.exports = function(app,passport){
 //---------------------------case 4 : Spot Booked --------------------------//
 	    		case Session.sbook :
 	    			var s =req.query.spot;
-
-	    			var t = req.query.type;
-	    			if(t==="book")
-	    				buff=;
-	    			else(t==="reserve")
-	    				buff=;
-
 	    			var clientKey = req.query.key;
-
-					MongoClient.connect('mongodb://adiityank:aditya*1@ds035786.mlab.com:35786/smartpark-testdb', function(err, db) {
-					if(err){
-						throw err;
-					}
-					//console.log(s);
-					db.collection('spots').update(
-					  { '_id' : new ObjectId(s) },  // query
-					  {$set: {'reserved': "1"}}, // replacement, replaces only the field "hi"
-					  function(err, object) {
-					      if (err){
-					          res.json(500, err);  // returns error if no matching object found
-					      }
-					  });
-					});
-
-
 	    			//console.log(s + " " + clientKey);
 	    			Spot.findOne({"_id":s})
   		      		.select('thngId thngKey')
@@ -389,7 +380,7 @@ module.exports = function(app,passport){
 	    		      		};
 	    		      		startBookingTimePoll(booking,thngId,key,startBookingTimePollCallback);
 	    		      	});
-	    		      	res.json(201,{'time':buff});
+	    		      	res.json(201,{'time':20});
 	    		      	
   		      		});
 				break;
