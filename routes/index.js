@@ -10,21 +10,14 @@
 var express = require('express');
 var https = require('https');
 var router = express.Router();
+var moment = require('moment');
 //var helper = require('./helper');
 var Session = require('../config/session');
 var User = require('../models/user');
 var Area = require('../models/area');
 var Spot = require('../models/spot');
 var Booking = require('../models/booking');
-var pushNote = function(err,booking,cb){
-		var msg ={'to' : booking.user_id , 'notification' :{}};
-		if(err){
-			msg.notification.body = err;
-			msg.notification.title = 'ERROR';
-		}else{
-			msg.notification.body = 'Spot Reached';
-			msg.notification.title = 'SPOT REACHED';
-		}
+var pushNote = function(msg,cb){
 		var options = {
 			  host: 'fcm.googleapis.com',
 			  path: '/fcm/send',
@@ -56,6 +49,13 @@ var pushNote = function(err,booking,cb){
 		}	
 };
 
+function generateMsg(booking, body,title){
+	var msg ={'to' : booking.user_id , 'notification' :{}};
+	msg.notification.body = body;
+	msg.notification.title = title ;
+	return msg;
+}
+
 function startBookingTimePoll(booking,thngId,key,cb){
 	var url = 'wss://ws.evrythng.com:443/thngs/'+thngId+'/properties?access_token='+key;
   	var socket = new WebSocket(url);
@@ -69,19 +69,21 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	};
   	var bookingId = booking._id;
 	var booktime = new mongoose.Types.ObjectId(bookingId).getTimestamp();
+	var bookingStarted,startDate ;
 	var bookingTimeout = setTimeout(function(){
 			socket.close(1000);
-			var error = {message : 'Booking Timeout. Sorry please back your car and leave the spot.'};
-			pushNote(error,booking,pushNoteCallback);
+			var msgBody = 'Booking Timeout';
+			var msgTitle = 'ERROR';
+			var msg = generateMsg(booking,msgBody,msgTitle);
+			pushNote(msg,pushNoteCallback);
 			Booking.findOneAndRemove({_id:bookingId},function(err,data){
 				if(err){
 					console.log('Error deleting booking' + err);
 					cb(null);
 				}
-				console.log('Deleted booking ' + data._id + '\nMessage : ' + error.message);
+				console.log('Deleted booking ' + data._id + '\nMessage : ' + msgBody);
 				cb(null);
 			});
-			
 	},400000);
   	socket.on('message', function (message) {
   		console.log(message);
@@ -92,23 +94,59 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  		//1. update the startTime for booking table for this parking spot
 	  		var date = new Date().getTime();
 	  		var diff = date - booktime;
+	  		
 	  		//console.log(date + " - " + booktime.getTime() + " = " + diff);
-	  		if(diff>0 && diff<600000){
-	  			Booking.update({ _id: bookingId },{$set: { 'start_time': date }},function(err,data){
+	  		if(diff > 0 && diff < 600000){
+	  		Booking.update({ _id: bookingId },{$set: { 'start_time': date }},function(err,data){
 	  				if(err){
 	  					console.log('Error updating starttime' + err);
-	  					var error = {message : 'Booking Failed.'};
-	  					pushNote(error,booking,pushNoteCallback);
+	  					var msgBody = 'Booking Failed';
+	  					var msgTitle = 'ERROR';
+	  					var msg = generateMsg(booking,msgBody,msgTitle);
+	  					pushNote(msg,pushNoteCallback);
 	  					cb(null);
-	  				}
-	  					//console.log('before pushNote');
-	  					pushNote(null,booking,pushNoteCallback);
-	  					//console.log('after pushNote');
+	  					}
+	  					
+	  					var msgbody = 'Spot Reached. Billing Started';
+	  					var msgtitle = 'SPOT REACHED';
+	  					var msg1 = generateMsg(booking,msgbody,msgtitle);
+	  					pushNote(msg1,pushNoteCallback);
 	  					clearTimeout(bookingTimeout);
-	  					cb(null);
+	  					bookingStarted = true;
+	  					startDate = date;
 	  			});
 	  		}
 	  	}
+	  	
+	  	else if (content[0].key==="status" && content[0].value===false && bookingStarted){
+	  		var endDate = new Date().getTime();
+	  		var totalTime = endDate - startDate; 
+	  		Booking.update({ _id: bookingId },{$set: { 'end_time': endDate }},function(err,data){
+	  				if(err){
+	  					console.log('Error updating end_time' + err);
+	  					var msgBody = 'Sorry! Error generating bill. We will get in touch.';
+	  					var msgTitle = 'ERROR';
+	  					var msg = generateMsg(booking,msgBody,msgTitle);
+	  					pushNote(msg,pushNoteCallback);
+	  					cb(null);
+	  				}
+	  					var d = moment.duration(totalTime);
+	  					var total = Math.floor(d.asHours()) + moment.utc(totalTime).format(':mm:ss');
+	  					var msgbody = 'You vacated the spot.Thank You.Total Parking Time = '+total;
+	  					var msgtitle = 'SPOT VACATED';
+	  					//console.log(msgtitle + " " + msgbody);
+	  					var msg2 = generateMsg(booking,msgbody,msgtitle);
+	  					pushNote(msg2,pushNoteCallback);
+	  					Booking.findOneAndRemove({_id:bookingId},function(err,data){
+	  						if(err){
+	  							console.log('Error deleting booking' + err);
+	  							cb(null);
+	  						}
+	  						console.log('Deleted booking ' + data._id + '\nMessage : ' + msgbody);
+	  						cb(null);
+	  					});
+	  			});
+	  		}
   	});
   	socket.on('error',function(error){
   		console.log('Error while connecting to web socket : ' + error);
