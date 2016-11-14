@@ -45,7 +45,7 @@ var pushNote = function(msg,cb){
 		}
 		catch(err){
 			console.log('Error in pushing : ' + err);
-			cb(new Error(err));
+			cb(msg);
 		}	
 };
 
@@ -56,18 +56,20 @@ function generateMsg(booking, body,title){
 	return msg;
 }
 
-function startBookingTimePoll(booking,thngId,key,cb){
+function startBookingTimePoll(booking,thngId,key,bufftime,cb){
 	var url = 'wss://ws.evrythng.com:443/thngs/'+thngId+'/properties?access_token='+key;
   	var socket = new WebSocket(url);
   	var pushNoteCallback  = function(err){
 		if(err){
-			console.log(err);
+			console.log('Error sending' + err +'. Retry after 5 secs');
+			setTimeout(pushNote(err,pushNoteCallback),5000);
 			return;
 		}
 		console.log('Notification Pushed');
 		return;
 	};
   	var bookingId = booking._id;
+  	var bookingSpotId = booking.spot_id;
 	var booktime = new mongoose.Types.ObjectId(bookingId).getTimestamp();
 	var bookingStarted,startDate ;
 	var bookingTimeout = setTimeout(function(){
@@ -76,43 +78,29 @@ function startBookingTimePoll(booking,thngId,key,cb){
 			var msgTitle = 'Booking failed';
 			var msg = generateMsg(booking,msgBody,msgTitle);
 			pushNote(msg,pushNoteCallback);
-
-			//set reserved=0
-				Spot.update({_id: booking.spot_id}, {$set: {
-				    reserved: "0"
-				 }}, function(err, resp) {
-				   console.log(resp);
-				});
-
+			Spot.update({_id: bookingSpotId}, {$set: {reserved: "0"}},function(err, resp){
+				 if(err){
+						 console.log('Spot reservation could not be removed');
+						 cb(err);
+					 }
+				 console.log('Spot reservation removed');
+			});
 			Booking.findOneAndRemove({_id:bookingId},function(err,data){
 				if(err){
 					console.log('Error deleting booking' + err);
 					cb(null);
 				}
-				console.log('Deleted booking ' + data._id);
 				cb(null);
 			});
-	},400000);
+	},bufftime);
   	socket.on('message', function (message) {
   		console.log(message);
 	  	var content = JSON.parse(message);
 	  	//console.log('Property update : ', content[0]);
 	  	if (content[0].key==="status" && content[0].value===true ){
-	  		//once property update occurs 
-	  		//1. update the startTime for booking table for this parking spot
 	  		var date = new Date().getTime();
 	  		var diff = date - booktime;
-	  		
-	  		//console.log(date + " - " + booktime.getTime() + " = " + diff);
-
-			//set reserved=0
-			Spot.update({_id: booking.spot_id}, {$set: {
-				    reserved: "0"
-				 }}, function(err, resp) {
-				   console.log(resp);
-				});
-
-	  		if(diff > 0 && diff < 600000){
+	  		if(diff > 0 && diff < bufftime){ //buffertime
 	  		Booking.update({ _id: bookingId },{$set: { 'start_time': date }},function(err,data){
 	  				if(err){
 	  					console.log('Error updating starttime' + err);
@@ -122,16 +110,14 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  					var msg = generateMsg(booking,msgBody,msgTitle);
 	  					pushNote(msg,pushNoteCallback);
 	  					cb(null);
-	  					}
-	  					
-	  					var msgbody = 'Parking time starts now';
-	  					var msgtitle = 'Spot Reached';
-
-	  					var msg1 = generateMsg(booking,msgbody,msgtitle);
-	  					pushNote(msg1,pushNoteCallback);
-	  					clearTimeout(bookingTimeout);
-	  					bookingStarted = true;
-	  					startDate = date;
+  					}
+  					var msgbody = 'Parking time starts now';
+  					var msgtitle = 'Spot Reached';
+  					var msg1 = generateMsg(booking,msgbody,msgtitle);
+  					pushNote(msg1,pushNoteCallback);
+  					clearTimeout(bookingTimeout);
+  					bookingStarted = true;
+  					startDate = date;
 	  			});
 	  		}
 	  	}
@@ -139,8 +125,6 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  	else if (content[0].key==="status" && content[0].value===false && bookingStarted){
 	  		var endDate = new Date().getTime();
 	  		var totalTime = endDate - startDate; 
-
-
 
 	  		Booking.update({ _id: bookingId },{$set: { 'end_time': endDate }},function(err,data){
 	  				if(err){
@@ -159,18 +143,27 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  					//console.log(msgtitle + " " + msgbody);
 	  					var msg2 = generateMsg(booking,msgbody,msgtitle);
 	  					pushNote(msg2,pushNoteCallback);
+	  					Spot.update({_id: bookingSpotId}, {$set: {reserved: "0"}}, function(err) {
+	  							 if(err){
+	  								 console.log('Spot reservation could not be removed');
+	  								 cb(err);
+	  							 }
+	  						   console.log('Spot reservation removed');
+	  					});
 	  					Booking.findOneAndRemove({_id:bookingId},function(err,data){
 	  						if(err){
 	  							console.log('Error deleting booking' + err);
 	  							cb(null);
 	  						}
 	  						console.log('Deleted booking ' + data._id + '\nMessage : ' + msgbody);
+	  						socket.close(1000);
 	  						cb(null);
 	  					});
 	  			});
 	  		}
   	});
   	socket.on('error',function(error){
+  		clearTimeout(bookingTimeout);
   		console.log('Error while connecting to web socket : ' + error);
   		cb(error);
   	});	
@@ -352,6 +345,9 @@ module.exports = function(app,passport){
 	    			var s =req.query.spot;
 	    			var t = req.query.type;
 	    			var clientKey = req.query.key;
+	    			if(!s || !t || !clientKey){
+	    				res.json(400,{message : 'Bad Query send spot=&key=&type='});
+	    			}
 	    			var buff = (t==="book")?20 : (parseInt(t,10)<=120)?parseInt(t,10):120;
 	    			buff=buff*1000;	//convert buff to millisecs;
 	    			Spot.findOneAndUpdate({"_id":s},{ $set: { reserved: '1' }},function(err){
@@ -385,14 +381,14 @@ module.exports = function(app,passport){
 	    		      		var startBookingTimePollCallback = function(err){
 	    		      			if(err){
 	    		      				setTimeout(function(){
-	    		      					startBookingTimePoll(booking,thngId,key,startBookingTimePollCallback);
-	    		      				},60000);
+	    		      					startBookingTimePoll(booking,thngId,key,buff,startBookingTimePollCallback);
+	    		      				},60000);//server unable to connect to evrythng..keep on trying after each minute
 	    		      				return;
 	    		      			}
 	    		      			console.log('timePoll done');
 	    		      			return;
 	    		      		};
-	    		      		startBookingTimePoll(booking,thngId,key,startBookingTimePollCallback);
+	    		      		startBookingTimePoll(booking,thngId,key,buff,startBookingTimePollCallback);
 	    		      	});
 	    		      	res.json(201,{'time':buff});
 	    		      	
