@@ -331,9 +331,9 @@ module.exports = function(app,passport){
 
 	    			var t = req.query.type;
 	    			if(t==="book")
-	    				buff=;
+	    				buff=20;
 	    			else(t==="reserve")
-	    				buff=;
+	    				buff=50;
 
 	    			var clientKey = req.query.key;
 
