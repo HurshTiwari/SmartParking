@@ -76,6 +76,14 @@ function startBookingTimePoll(booking,thngId,key,cb){
 			var msgTitle = 'Booking failed';
 			var msg = generateMsg(booking,msgBody,msgTitle);
 			pushNote(msg,pushNoteCallback);
+
+			//set reserved=0
+				Spot.update({_id: data._id}, {$set: {
+				    reserved: "0"
+				 }}, function(err, resp) {
+				   console.log(resp);
+				});
+
 			Booking.findOneAndRemove({_id:bookingId},function(err,data){
 				if(err){
 					console.log('Error deleting booking' + err);
@@ -96,12 +104,21 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  		var diff = date - booktime;
 	  		
 	  		//console.log(date + " - " + booktime.getTime() + " = " + diff);
+
+			//set reserved=0
+			Spot.update({_id: data._id}, {$set: {
+				    reserved: "0"
+				 }}, function(err, resp) {
+				   console.log(resp);
+				});
+
 	  		if(diff > 0 && diff < 600000){
 	  		Booking.update({ _id: bookingId },{$set: { 'start_time': date }},function(err,data){
 	  				if(err){
 	  					console.log('Error updating starttime' + err);
 	  					var msgBody = 'Booking failed.Book again!';
 	  					var msgTitle = 'Booking failed';
+
 	  					var msg = generateMsg(booking,msgBody,msgTitle);
 	  					pushNote(msg,pushNoteCallback);
 	  					cb(null);
@@ -109,6 +126,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  					
 	  					var msgbody = 'Parking time starts now';
 	  					var msgtitle = 'Spot Reached';
+
 	  					var msg1 = generateMsg(booking,msgbody,msgtitle);
 	  					pushNote(msg1,pushNoteCallback);
 	  					clearTimeout(bookingTimeout);
@@ -121,11 +139,15 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  	else if (content[0].key==="status" && content[0].value===false && bookingStarted){
 	  		var endDate = new Date().getTime();
 	  		var totalTime = endDate - startDate; 
+
+
+
 	  		Booking.update({ _id: bookingId },{$set: { 'end_time': endDate }},function(err,data){
 	  				if(err){
 	  					console.log('Error updating end_time' + err);
 	  					var msgBody = 'Sorry! Error generating bill. We will get in touch.';
 	  					var msgTitle = 'Spot vacated';
+
 	  					var msg = generateMsg(booking,msgBody,msgTitle);
 	  					pushNote(msg,pushNoteCallback);
 	  					cb(null);
