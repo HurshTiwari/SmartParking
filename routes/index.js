@@ -78,7 +78,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 			pushNote(msg,pushNoteCallback);
 
 			//set reserved=0
-				Spot.update({_id: data._id}, {$set: {
+				Spot.update({_id: booking.spot_id}, {$set: {
 				    reserved: "0"
 				 }}, function(err, resp) {
 				   console.log(resp);
@@ -106,7 +106,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  		//console.log(date + " - " + booktime.getTime() + " = " + diff);
 
 			//set reserved=0
-			Spot.update({_id: data._id}, {$set: {
+			Spot.update({_id: booking.spot_id}, {$set: {
 				    reserved: "0"
 				 }}, function(err, resp) {
 				   console.log(resp);
