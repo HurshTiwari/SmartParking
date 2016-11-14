@@ -72,8 +72,8 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	var bookingStarted,startDate ;
 	var bookingTimeout = setTimeout(function(){
 			socket.close(1000);
-			var msgBody = 'Booking Timeout';
-			var msgTitle = 'ERROR';
+			var msgBody = 'Booking Failed.Book again!';
+			var msgTitle = 'Booking failed';
 			var msg = generateMsg(booking,msgBody,msgTitle);
 			pushNote(msg,pushNoteCallback);
 			Booking.findOneAndRemove({_id:bookingId},function(err,data){
@@ -81,7 +81,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 					console.log('Error deleting booking' + err);
 					cb(null);
 				}
-				console.log('Deleted booking ' + data._id + '\nMessage : ' + msgBody);
+				console.log('Deleted booking ' + data._id);
 				cb(null);
 			});
 	},400000);
@@ -100,15 +100,15 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  		Booking.update({ _id: bookingId },{$set: { 'start_time': date }},function(err,data){
 	  				if(err){
 	  					console.log('Error updating starttime' + err);
-	  					var msgBody = 'Booking Failed';
-	  					var msgTitle = 'ERROR';
+	  					var msgBody = 'Booking failed.Book again!';
+	  					var msgTitle = 'Booking failed';
 	  					var msg = generateMsg(booking,msgBody,msgTitle);
 	  					pushNote(msg,pushNoteCallback);
 	  					cb(null);
 	  					}
 	  					
-	  					var msgbody = 'Spot Reached. Billing Started';
-	  					var msgtitle = 'SPOT REACHED';
+	  					var msgbody = 'Parking time starts now';
+	  					var msgtitle = 'Spot Reached';
 	  					var msg1 = generateMsg(booking,msgbody,msgtitle);
 	  					pushNote(msg1,pushNoteCallback);
 	  					clearTimeout(bookingTimeout);
@@ -125,15 +125,15 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  				if(err){
 	  					console.log('Error updating end_time' + err);
 	  					var msgBody = 'Sorry! Error generating bill. We will get in touch.';
-	  					var msgTitle = 'ERROR';
+	  					var msgTitle = 'Spot vacated';
 	  					var msg = generateMsg(booking,msgBody,msgTitle);
 	  					pushNote(msg,pushNoteCallback);
 	  					cb(null);
 	  				}
 	  					var d = moment.duration(totalTime);
 	  					var total = Math.floor(d.asHours()) + moment.utc(totalTime).format(':mm:ss');
-	  					var msgbody = 'You vacated the spot.Thank You.Total Parking Time = '+total;
-	  					var msgtitle = 'SPOT VACATED';
+	  					var msgbody = 'Thank You for parking with us.Total Parking Time = '+total;
+	  					var msgtitle = 'Spot vacated';
 	  					//console.log(msgtitle + " " + msgbody);
 	  					var msg2 = generateMsg(booking,msgbody,msgtitle);
 	  					pushNote(msg2,pushNoteCallback);
