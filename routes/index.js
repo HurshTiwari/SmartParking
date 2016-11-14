@@ -56,7 +56,7 @@ function generateMsg(booking, body,title){
 	return msg;
 }
 
-function startBookingTimePoll(booking,thngId,key,cb){
+function startBookingTimePoll(booking,thngId,key,bufftime,cb){
 	var url = 'wss://ws.evrythng.com:443/thngs/'+thngId+'/properties?access_token='+key;
   	var socket = new WebSocket(url);
   	var pushNoteCallback  = function(err){
@@ -92,7 +92,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 				console.log('Deleted booking ' + data._id);
 				cb(null);
 			});
-	},400000);
+	},bufftime);
   	socket.on('message', function (message) {
   		console.log(message);
 	  	var content = JSON.parse(message);
@@ -112,7 +112,7 @@ function startBookingTimePoll(booking,thngId,key,cb){
 				   console.log(resp);
 				});
 
-	  		if(diff > 0 && diff < 600000){
+	  		if(diff > 0 && diff < bufftime){ //buffertime
 	  		Booking.update({ _id: bookingId },{$set: { 'start_time': date }},function(err,data){
 	  				if(err){
 	  					console.log('Error updating starttime' + err);
@@ -139,8 +139,6 @@ function startBookingTimePoll(booking,thngId,key,cb){
 	  	else if (content[0].key==="status" && content[0].value===false && bookingStarted){
 	  		var endDate = new Date().getTime();
 	  		var totalTime = endDate - startDate; 
-
-
 
 	  		Booking.update({ _id: bookingId },{$set: { 'end_time': endDate }},function(err,data){
 	  				if(err){
@@ -353,9 +351,9 @@ module.exports = function(app,passport){
 
 	    			var t = req.query.type;
 	    			if(t==="book")
-	    				buff=20;
+	    				buff=20*1000;
 	    			else(t==="reserve")
-	    				buff=50;
+	    				buff=50*1000;
 
 	    			var clientKey = req.query.key;
 
@@ -402,14 +400,14 @@ module.exports = function(app,passport){
 	    		      		var startBookingTimePollCallback = function(err){
 	    		      			if(err){
 	    		      				setTimeout(function(){
-	    		      					startBookingTimePoll(booking,thngId,key,startBookingTimePollCallback);
-	    		      				},60000);
+	    		      					startBookingTimePoll(booking,thngId,key,buff,startBookingTimePollCallback);
+	    		      				},60000);//server unable to connect to evrythng..keep on trying after each minute
 	    		      				return;
 	    		      			}
 	    		      			console.log('timePoll done');
 	    		      			return;
 	    		      		};
-	    		      		startBookingTimePoll(booking,thngId,key,startBookingTimePollCallback);
+	    		      		startBookingTimePoll(booking,thngId,key,buff,startBookingTimePollCallback);
 	    		      	});
 	    		      	res.json(201,{'time':buff});
 	    		      	
