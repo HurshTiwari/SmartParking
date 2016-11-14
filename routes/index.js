@@ -350,31 +350,16 @@ module.exports = function(app,passport){
 //---------------------------case 4 : Spot Booked --------------------------//
 	    		case Session.sbook :
 	    			var s =req.query.spot;
-
 	    			var t = req.query.type;
-	    			if(t==="book")
-	    				buff=20;
-	    			else(t==="reserve")
-	    				buff=50;
-
 	    			var clientKey = req.query.key;
-
-					MongoClient.connect('mongodb://adiityank:aditya*1@ds035786.mlab.com:35786/smartpark-testdb', function(err, db) {
-					if(err){
-						throw err;
-					}
-					//console.log(s);
-					db.collection('spots').update(
-					  { '_id' : new ObjectId(s) },  // query
-					  {$set: {'reserved': "1"}}, // replacement, replaces only the field "hi"
-					  function(err, object) {
-					      if (err){
-					          res.json(500, err);  // returns error if no matching object found
-					      }
-					  });
-					});
-
-
+	    			var buff = (t==="book")?20 : (parseInt(t,10)<=120)?parseInt(t,10):120;
+	    			buff=buff*1000;	//convert buff to millisecs;
+	    			Spot.findOneAndUpdate({"_id":s},{ $set: { reserved: '1' }},function(err){
+	    				if(err){
+	    					console.log('Database error :'+	err);
+	    					res.json(500,err);
+	    				}
+	    			});
 	    			//console.log(s + " " + clientKey);
 	    			Spot.findOne({"_id":s})
   		      		.select('thngId thngKey')
@@ -391,8 +376,6 @@ module.exports = function(app,passport){
 	    		      		user_id : clientKey,
 	    		      	    spot_id: spot._id
 	    		      	});
-	    		      	
-	    		      	
 	    		      	booking.save(function(err,booking){
 	    		      		if(err){
 	    		      			console.log(err);	
