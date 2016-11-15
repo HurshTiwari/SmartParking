@@ -16,8 +16,8 @@ var mongoose = require("mongoose");
 var mongodbUri = require('mongodb-uri');
 
 var bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 var verifier = require('google-id-token-verifier');
 
 var uri = process.env.MONGOLAB_URI ;
@@ -30,8 +30,6 @@ mongoose.connect(mongooseConnectString, function (error) {
     	}
 });
 
-
-require('./config/passport')(passport);
 // all environments
 app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views');
@@ -39,44 +37,19 @@ app.set('view engine', 'jade');
 app.set('trust proxy', true);
 app.use(express.favicon());
 app.use(express.logger('dev'));
-app.use(express.cookieParser());
-app.use(express.session({secret : 'doomsday'}));
-app.use(passport.initialize());
-app.use(passport.session());
+//app.use(express.cookieParser());
+//app.use(express.session({secret : 'doomsday'}));
+//app.use(passport.initialize());
+//app.use(passport.session());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
-
-// development only
-  app.use(express.errorHandler());
-
-
- // Using the flash middleware provided by connect-flash to store messages in session
- // and displaying in templates
-  var flash = require('connect-flash');
-  app.use(flash());
-  app.use(express.methodOverride());
+//app.use(express.errorHandler());
+//var flash = require('connect-flash');
+//app.use(flash());
+app.use(express.methodOverride());
 
 var routes = require('./routes/index')(app,passport);
+
 app.listen(app.get('port'),function(){
 	console.log('running');
 });
-
- app.post('/auth/google',function(req,res){
-    	//console.log(req.query);
-    	//console.log(req);
-	console.log(req.body.token);
-    	var clientId = '951571840599-rqjt18gfuiponqlrophjctrag0nk30i1.apps.googleusercontent.com';
-    	var IdToken = req.body.token;
-	verifier.verify(IdToken, clientId, function (err, tokenInfo) {
-	if (!err) {
-	console.log(tokenInfo);
-  JSON.stringify(tokenInfo);
-  req.session.profile = tokenInfo;
-  console.log(req.session);
-  res.json(200, tokenInfo);
-	}
-	else
-	   return res.send(500, "problem in information retrieval...");
-	});
-	console.log("ended");
-  });
