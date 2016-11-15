@@ -348,10 +348,8 @@ module.exports = function(app,passport){
 	    			if(!s || !t || !clientKey){
 	    				res.json(400,{message : 'Bad Query send spot=&key=&type='});
 	    			}
-	    			//buff is received in minutes. Set accordingly and change later to seconds.
-	    			//max reserved time is set to 10 minutes.
-	    			var buff = (t==="book")?1 : (parseInt(t,10)<=10)?parseInt(t,10):10;
-	    			buff=buff*60*1000;	//convert buff to millisecs;
+	    			var buff = (t==="book")?20 : (parseInt(t,10)<=120)?parseInt(t,10):120;
+	    			buff=buff*1000;	//convert buff to millisecs;
 	    			Spot.findOneAndUpdate({"_id":s},{ $set: { reserved: '1' }},function(err){
 	    				if(err){
 	    					console.log('Database error :'+	err);
@@ -393,6 +391,7 @@ module.exports = function(app,passport){
 	    		      		startBookingTimePoll(booking,thngId,key,buff,startBookingTimePollCallback);
 	    		      	});
 	    		      	res.json(201,{'time':buff});
+	    		      	
   		      		});
 				break;
 			
