@@ -21,6 +21,7 @@ var getStatus = require('./getStatus');
 var startBookingTimePoll = require('./bookingFactory');
 module.exports = function(app,passport){
 		app.all('/api/*',function(req,res,next){
+				console.log(req);
 				var IdToken = req.get('gtoken');
 				var clientId = process.env.APP_CLIENT_ID;
 				console.log('Inside app.all  ' + IdToken);
