@@ -23,8 +23,10 @@ module.exports = function(app,passport){
 		app.all('/api/*',function(req,res,next){
 				var IdToken = req.get('gtoken');
 				var clientId = process.env.APP_CLIENT_ID;
+				console.log('Inside app.all  ' + IdToken);
 				verifier.verify(IdToken, clientId, function (err, tokenInfo) {
 					  if (err) { 
+						console.log('Error ' + err);
 					    return res.json(401,{message : 'Unauthorized'});
 					  }
 					  console.log('got token ' +tokenInfo);
