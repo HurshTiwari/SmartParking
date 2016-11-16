@@ -63,8 +63,6 @@ app.listen(app.get('port'),function(){
 	if (!err) {
 	console.log(tokenInfo);
   JSON.stringify(tokenInfo);
-  req.session.profile = tokenInfo;
-  console.log(req.session);
   res.json(200, tokenInfo);
 	}
 	else
