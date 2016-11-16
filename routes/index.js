@@ -180,4 +180,23 @@ module.exports = function(app,passport){
 		    		      	res.json(201,{'time':buff});
 	  		      		});
     	});
+	app.post('/auth/google',function(req,res){
+      	//console.log(req.query);
+      	//console.log(req);
+  	console.log(req.body.token);
+      	var clientId = '951571840599 rqjt18gfuiponqlrophjctrag0nk30i1.apps.googleusercontent.com';
+      	var IdToken = req.body.token;
+  	verifier.verify(IdToken, clientId, function (err, tokenInfo) {
+  	if (!err) {
+  	console.log(tokenInfo);
+    JSON.stringify(tokenInfo);
+    req.session.profile = tokenInfo;
+    console.log(req.session);
+    res.json(200, tokenInfo);
+  	}
+  	else
+  	   return res.send(500, "problem in information retrieval...");
+  	});
+  	console.log("ended");
+    });
 };
